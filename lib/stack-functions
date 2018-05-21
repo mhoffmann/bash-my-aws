@@ -299,9 +299,9 @@ stack-tail() {
   [[ -z ${stack} ]] && __bma_usage "stack" && return 1
 
   local current
-  local final_line
   local output
-  local previous
+  local count
+  count=1
   until echo "$current" | tail -1 | egrep -q "${stack}.*_(COMPLETE|FAILED)"
   do
     if ! output=$(stack-events "$inputs"); then
@@ -311,13 +311,8 @@ stack-tail() {
     if [ -z "$output" ]; then sleep 1; continue; fi
 
     current=$(echo "$output" | sed '$d')
-    final_line=$(echo "$output" | tail -1)
-    if [ -z "$previous" ]; then
-      echo "$current"
-    elif [ "$current" != "$previous" ]; then
-      comm -13 <(echo "$previous") <(echo "$current")
-    fi
-    previous="$current"
+    echo "$current" | tail +$count
+    count=$(echo "$current" | wc -l | tr -d '[:space:]')
     sleep 1
   done
   echo $final_line
